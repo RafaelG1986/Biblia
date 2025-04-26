@@ -1,0 +1,116 @@
+<Window x:Class="BibliaApp.Views.GestionContenidoWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Gestión de Contenido Bíblico" Height="600" Width="900"
+        WindowStartupLocation="CenterOwner">
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Panel de selección de versión/libro/capítulo -->
+        <GroupBox Header="Selección" Margin="0,0,0,10">
+            <Grid Margin="5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <Label Grid.Column="0" Content="Versión:" VerticalAlignment="Center"/>
+                <ComboBox x:Name="cmbVersiones" Grid.Column="1" Margin="5,0" 
+                          SelectionChanged="cmbVersiones_SelectionChanged"
+                          DisplayMemberPath="Nombre"/>
+                
+                <Label Grid.Column="2" Content="Libro:" VerticalAlignment="Center"/>
+                <ComboBox x:Name="cmbLibros" Grid.Column="3" Margin="5,0" 
+                          SelectionChanged="cmbLibros_SelectionChanged"
+                          DisplayMemberPath="Nombre"/>
+                
+                <Label Grid.Column="4" Content="Capítulo:" VerticalAlignment="Center"/>
+                <ComboBox x:Name="cmbCapitulos" Grid.Column="5" Margin="5,0" 
+                          SelectionChanged="cmbCapitulos_SelectionChanged"
+                          DisplayMemberPath="Numero"/>
+            </Grid>
+        </GroupBox>
+        
+        <!-- Contenido principal con pestañas -->
+        <TabControl Grid.Row="1">
+            <!-- Pestaña de versículos -->
+            <TabItem Header="Versículos">
+                <Grid Margin="5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Lista de versículos existentes -->
+                    <GroupBox Header="Versículos existentes" Grid.Row="0">
+                        <ListView x:Name="lstVersiculos" Height="150" Margin="5"
+                                  SelectionChanged="lstVersiculos_SelectionChanged">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Número" DisplayMemberBinding="{Binding Numero}" Width="60"/>
+                                    <GridViewColumn Header="Texto" DisplayMemberBinding="{Binding Texto}" Width="600"/>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </GroupBox>
+                    
+                    <!-- Ingreso de múltiples versículos -->
+                    <GroupBox Header="Agregar múltiples versículos" Grid.Row="1" Margin="0,10,0,0">
+                        <Grid Margin="5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <TextBlock Grid.Row="0" TextWrapping="Wrap" Margin="0,0,0,5">
+                                <Run FontWeight="Bold">Instrucciones:</Run> 
+                                <LineBreak/>
+                                1. Primero indique el rango de versículos (ejemplo: Genesis 1:1-10)
+                                <LineBreak/>
+                                2. Luego ingrese cada versículo con su número seguido de un espacio y el texto.
+                                <LineBreak/>
+                                Ejemplo:
+                                <LineBreak/>
+                                1 En el principio creó Dios los cielos y la tierra.
+                                <LineBreak/>
+                                2 Y la tierra estaba desordenada y vacía...
+                            </TextBlock>
+                            
+                            <DockPanel Grid.Row="1" Margin="0,5">
+                                <Label Content="Rango:" Width="60"/>
+                                <TextBox x:Name="txtRangoVersiculos" Margin="0,0,0,5"/>
+                            </DockPanel>
+                            
+                            <TextBox x:Name="txtMultiplesVersiculos" Grid.Row="2" 
+                                    TextWrapping="Wrap" AcceptsReturn="True" 
+                                    VerticalScrollBarVisibility="Auto"/>
+                            
+                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                                <Button x:Name="btnAgregarMultiplesVersiculos" Content="Agregar versículos" 
+                                        Width="150" Click="btnAgregarMultiplesVersiculos_Click"/>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+                    
+                    <!-- Botones de acción para versículos individuales -->
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                        <Button x:Name="btnEliminarVersiculo" Content="Eliminar" Width="100" Margin="0,0,10,0"
+                                Click="btnEliminarVersiculo_Click" IsEnabled="False"/>
+                        <Button x:Name="btnEditarVersiculo" Content="Editar" Width="100"
+                                Click="btnEditarVersiculo_Click" IsEnabled="False"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

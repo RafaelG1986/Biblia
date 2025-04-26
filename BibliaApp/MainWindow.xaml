@@ -1,0 +1,84 @@
+﻿<Window x:Class="BibliaApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="BibliaApp" Height="600" Width="900"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Menú principal -->
+        <Menu Grid.Row="0">
+            <MenuItem Header="Archivo">
+                <MenuItem Header="Agregar Versión" Click="MenuAgregarVersion_Click"/>
+                <MenuItem Header="Gestionar Contenido" Click="MenuGestionarContenido_Click"/>
+                <Separator/>
+                <MenuItem Header="Salir" Click="MenuSalir_Click"/>
+            </MenuItem>
+        </Menu>
+        
+        <!-- Contenido principal -->
+        <Grid Grid.Row="1" Margin="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- Panel izquierdo: Versiones y libros -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                
+                <!-- Selector de versión -->
+                <DockPanel Grid.Row="0" Margin="0,0,0,10">
+                    <Label Content="Versión:" DockPanel.Dock="Left" VerticalAlignment="Center"/>
+                    <ComboBox x:Name="VersionesComboBox" DisplayMemberPath="Nombre" SelectionChanged="VersionesComboBox_SelectionChanged"/>
+                </DockPanel>
+                
+                <!-- Filtro de búsqueda -->
+                <DockPanel Grid.Row="1" Margin="0,0,0,10">
+                    <Label Content="Buscar:" DockPanel.Dock="Left" VerticalAlignment="Center"/>
+                    <TextBox x:Name="FiltroTextBox" TextChanged="FiltroTextBox_TextChanged"/>
+                </DockPanel>
+                
+                <!-- Lista de libros -->
+                <ListBox x:Name="LibrosListBox" Grid.Row="2" DisplayMemberPath="Nombre" SelectionChanged="LibrosListBox_SelectionChanged"/>
+            </Grid>
+            
+            <!-- Panel derecho: Capítulo y versículos -->
+            <Grid Grid.Column="1" Margin="10,0,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                
+                <!-- Selector de capítulo -->
+                <DockPanel Grid.Row="0" Margin="0,0,0,10">
+                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                        <Label Content="Capítulo:" VerticalAlignment="Center"/>
+                        <ComboBox x:Name="CapitulosComboBox" Width="100" DisplayMemberPath="Numero" SelectionChanged="CapitulosComboBox_SelectionChanged"/>
+                    </StackPanel>
+                    
+                    <TextBlock x:Name="TituloTextBlock" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
+                </DockPanel>
+                
+                <!-- Lista de versículos -->
+                <ListView x:Name="VersiculosListView" Grid.Row="1">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Margin="0,3">
+                                <TextBlock Text="{Binding Numero}" FontWeight="Bold" Margin="0,0,5,0" VerticalAlignment="Top"/>
+                                <TextBlock Text="{Binding Texto}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>
