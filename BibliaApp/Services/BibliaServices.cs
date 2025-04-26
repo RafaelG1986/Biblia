@@ -264,6 +264,17 @@ namespace BibliaApp.Services
             GuardarCapitulos();
         }
         
+        public void ActualizarCapitulo(string versionId, int libroId, Capitulo capitulo)
+        {
+            var capituloExistente = _capitulos.FirstOrDefault(c => c.Id == capitulo.Id);
+            if (capituloExistente == null)
+                throw new Exception($"No se encontró el capítulo con ID {capitulo.Id}");
+                
+            capituloExistente.Numero = capitulo.Numero;
+            
+            GuardarCapitulos();
+        }
+        
         public void EliminarCapitulo(string versionId, int libroId, int capituloId)
         {
             var capitulo = _capitulos.FirstOrDefault(c => c.Id == capituloId);

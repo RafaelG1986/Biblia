@@ -17,6 +17,12 @@ namespace BibliaApp.Views
         private TituloBiblico? _tituloSeleccionado;
         private bool _modoEdicionTitulo = false;
 
+        // Variables para gestión de libros y capítulos
+        private Libro? _libroSeleccionadoAdmin;
+        private Capitulo? _capituloSeleccionadoAdmin;
+        private bool _modoEdicionLibro = false;
+        private bool _modoEdicionCapitulo = false;
+
         public GestionContenidoWindow(BibliaService bibliaService)
         {
             InitializeComponent();
@@ -49,6 +55,8 @@ namespace BibliaApp.Views
             
             var libros = _bibliaService.ObtenerLibros(_versionSeleccionada.Id);
             cmbLibros.ItemsSource = libros;
+            // Cargamos también en la lista de administración
+            lstLibrosAdmin.ItemsSource = libros;
             
             if (libros.Any())
             {
@@ -58,11 +66,12 @@ namespace BibliaApp.Views
             {
                 cmbLibros.ItemsSource = null;
                 cmbCapitulos.ItemsSource = null;
+                lstCapitulosAdmin.ItemsSource = null;
                 
                 _libroSeleccionado = null;
                 _capituloSeleccionado = null;
                 
-                MessageBox.Show("No hay libros disponibles en esta versión. Puede agregar un nuevo libro usando la opción correspondiente.", 
+                MessageBox.Show("No hay libros disponibles en esta versión. Puede agregar un nuevo libro usando la pestaña Libros.", 
                     "Sin libros", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
@@ -73,6 +82,12 @@ namespace BibliaApp.Views
             
             var capitulos = _bibliaService.ObtenerCapitulos(_versionSeleccionada.Id, _libroSeleccionado.Id);
             cmbCapitulos.ItemsSource = capitulos;
+            // Cargamos también en la lista de administración
+            lstCapitulosAdmin.ItemsSource = capitulos.Select(c => new {
+                c.Id,
+                c.Numero,
+                NumeroVersiculos = _bibliaService.ObtenerVersiculos(_versionSeleccionada.Id, _libroSeleccionado.Id, c.Id).Count
+            }).ToList();
             
             if (capitulos.Any())
             {
@@ -81,11 +96,7 @@ namespace BibliaApp.Views
             else
             {
                 cmbCapitulos.ItemsSource = null;
-                
                 _capituloSeleccionado = null;
-                
-                MessageBox.Show("No hay capítulos disponibles en este libro. Puede agregar un nuevo capítulo usando la opción correspondiente.", 
-                    "Sin capítulos", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
         
@@ -452,6 +463,269 @@ namespace BibliaApp.Views
             catch (Exception ex)
             {
                 MessageBox.Show($"Error al agregar versículos: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // Métodos para gestionar libros
+        private void lstLibrosAdmin_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            _libroSeleccionadoAdmin = lstLibrosAdmin.SelectedItem as Libro;
+            
+            btnEliminarLibro.IsEnabled = _libroSeleccionadoAdmin != null;
+            btnEditarLibro.IsEnabled = _libroSeleccionadoAdmin != null;
+        }
+
+        private void btnLimpiarLibro_Click(object sender, RoutedEventArgs e)
+        {
+            LimpiarFormularioLibro();
+        }
+
+        private void LimpiarFormularioLibro()
+        {
+            txtNumeroLibro.Text = string.Empty;
+            txtNombreLibro.Text = string.Empty;
+            txtAbreviaturaLibro.Text = string.Empty;
+            
+            _modoEdicionLibro = false;
+            _libroSeleccionadoAdmin = null;
+            btnGuardarLibro.Content = "Guardar";
+        }
+
+        private void btnGuardarLibro_Click(object sender, RoutedEventArgs e)
+        {
+            if (_versionSeleccionada == null)
+            {
+                MessageBox.Show("Debe seleccionar una versión.", "Datos incompletos", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            
+            if (string.IsNullOrWhiteSpace(txtNumeroLibro.Text))
+            {
+                MessageBox.Show("Debe ingresar el número del libro.", "Datos incompletos", MessageBoxButton.OK, MessageBoxImage.Warning);
+                txtNumeroLibro.Focus();
+                return;
+            }
+            
+            if (string.IsNullOrWhiteSpace(txtNombreLibro.Text))
+            {
+                MessageBox.Show("Debe ingresar el nombre del libro.", "Datos incompletos", MessageBoxButton.OK, MessageBoxImage.Warning);
+                txtNombreLibro.Focus();
+                return;
+            }
+            
+            if (string.IsNullOrWhiteSpace(txtAbreviaturaLibro.Text))
+            {
+                MessageBox.Show("Debe ingresar la abreviatura del libro.", "Datos incompletos", MessageBoxButton.OK, MessageBoxImage.Warning);
+                txtAbreviaturaLibro.Focus();
+                return;
+            }
+            
+            if (!int.TryParse(txtNumeroLibro.Text, out int numeroLibro) || numeroLibro <= 0)
+            {
+                MessageBox.Show("El número del libro debe ser un valor numérico positivo.", "Datos incorrectos", MessageBoxButton.OK, MessageBoxImage.Warning);
+                txtNumeroLibro.Focus();
+                return;
+            }
+            
+            try
+            {
+                if (_modoEdicionLibro && _libroSeleccionadoAdmin != null)
+                {
+                    // Actualizar libro existente
+                    _libroSeleccionadoAdmin.Numero = numeroLibro;
+                    _libroSeleccionadoAdmin.Nombre = txtNombreLibro.Text.Trim();
+                    _libroSeleccionadoAdmin.Abreviatura = txtAbreviaturaLibro.Text.Trim();
+                    
+                    _bibliaService.ActualizarLibro(_versionSeleccionada.Id, _libroSeleccionadoAdmin);
+                    MessageBox.Show("Libro actualizado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    // Crear nuevo libro
+                    var libro = new Libro
+                    {
+                        Numero = numeroLibro,
+                        Nombre = txtNombreLibro.Text.Trim(),
+                        Abreviatura = txtAbreviaturaLibro.Text.Trim()
+                    };
+                    
+                    _bibliaService.AgregarLibro(_versionSeleccionada.Id, libro);
+                    MessageBox.Show("Libro agregado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                
+                // Limpiar y recargar
+                LimpiarFormularioLibro();
+                CargarLibros();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al guardar libro: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void btnEditarLibro_Click(object sender, RoutedEventArgs e)
+        {
+            if (_libroSeleccionadoAdmin == null) return;
+            
+            _modoEdicionLibro = true;
+            btnGuardarLibro.Content = "Actualizar";
+            
+            txtNumeroLibro.Text = _libroSeleccionadoAdmin.Numero.ToString();
+            txtNombreLibro.Text = _libroSeleccionadoAdmin.Nombre;
+            txtAbreviaturaLibro.Text = _libroSeleccionadoAdmin.Abreviatura;
+        }
+
+        private void btnEliminarLibro_Click(object sender, RoutedEventArgs e)
+        {
+            if (_libroSeleccionadoAdmin == null || _versionSeleccionada == null) return;
+            
+            var mensaje = $"¿Está seguro de que desea eliminar el libro {_libroSeleccionadoAdmin.Nombre}? Se eliminarán todos los capítulos y versículos asociados.";
+            var resultado = MessageBox.Show(mensaje, "Confirmar eliminación", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            
+            if (resultado == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    _bibliaService.EliminarLibro(_versionSeleccionada.Id, _libroSeleccionadoAdmin.Id);
+                    
+                    MessageBox.Show("Libro eliminado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                    
+                    LimpiarFormularioLibro();
+                    CargarLibros();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error al eliminar libro: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        // Métodos para gestionar capítulos
+        private void lstCapitulosAdmin_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var item = lstCapitulosAdmin.SelectedItem;
+            if (item != null)
+            {
+                // Como estamos usando un objeto anónimo para mostrar info adicional, extraemos el Id
+                int capituloId = (int)item.GetType().GetProperty("Id").GetValue(item);
+                _capituloSeleccionadoAdmin = _bibliaService.ObtenerCapituloPorId(
+                    _versionSeleccionada?.Id ?? string.Empty, 
+                    _libroSeleccionado?.Id ?? 0, 
+                    capituloId);
+            }
+            else
+            {
+                _capituloSeleccionadoAdmin = null;
+            }
+            
+            btnEliminarCapitulo.IsEnabled = _capituloSeleccionadoAdmin != null;
+            btnEditarCapitulo.IsEnabled = _capituloSeleccionadoAdmin != null;
+        }
+
+        private void btnLimpiarCapitulo_Click(object sender, RoutedEventArgs e)
+        {
+            LimpiarFormularioCapitulo();
+        }
+
+        private void LimpiarFormularioCapitulo()
+        {
+            txtNumeroCapitulo.Text = string.Empty;
+            
+            _modoEdicionCapitulo = false;
+            _capituloSeleccionadoAdmin = null;
+            btnGuardarCapitulo.Content = "Guardar";
+        }
+
+        private void btnGuardarCapitulo_Click(object sender, RoutedEventArgs e)
+        {
+            if (_versionSeleccionada == null || _libroSeleccionado == null)
+            {
+                MessageBox.Show("Debe seleccionar una versión y un libro.", "Datos incompletos", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            
+            if (string.IsNullOrWhiteSpace(txtNumeroCapitulo.Text))
+            {
+                MessageBox.Show("Debe ingresar el número del capítulo.", "Datos incompletos", MessageBoxButton.OK, MessageBoxImage.Warning);
+                txtNumeroCapitulo.Focus();
+                return;
+            }
+            
+            if (!int.TryParse(txtNumeroCapitulo.Text, out int numeroCapitulo) || numeroCapitulo <= 0)
+            {
+                MessageBox.Show("El número del capítulo debe ser un valor numérico positivo.", "Datos incorrectos", MessageBoxButton.OK, MessageBoxImage.Warning);
+                txtNumeroCapitulo.Focus();
+                return;
+            }
+            
+            try
+            {
+                if (_modoEdicionCapitulo && _capituloSeleccionadoAdmin != null)
+                {
+                    // Actualizar capítulo existente
+                    _capituloSeleccionadoAdmin.Numero = numeroCapitulo;
+                    
+                    _bibliaService.ActualizarCapitulo(_versionSeleccionada.Id, _libroSeleccionado.Id, _capituloSeleccionadoAdmin);
+                    MessageBox.Show("Capítulo actualizado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    // Crear nuevo capítulo
+                    var capitulo = new Capitulo
+                    {
+                        Numero = numeroCapitulo,
+                        LibroId = _libroSeleccionado.Id
+                    };
+                    
+                    _bibliaService.AgregarCapitulo(_versionSeleccionada.Id, _libroSeleccionado.Id, capitulo);
+                    MessageBox.Show("Capítulo agregado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                
+                // Limpiar y recargar
+                LimpiarFormularioCapitulo();
+                CargarCapitulos();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al guardar capítulo: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void btnEditarCapitulo_Click(object sender, RoutedEventArgs e)
+        {
+            if (_capituloSeleccionadoAdmin == null) return;
+            
+            _modoEdicionCapitulo = true;
+            btnGuardarCapitulo.Content = "Actualizar";
+            
+            txtNumeroCapitulo.Text = _capituloSeleccionadoAdmin.Numero.ToString();
+        }
+
+        private void btnEliminarCapitulo_Click(object sender, RoutedEventArgs e)
+        {
+            if (_capituloSeleccionadoAdmin == null || _versionSeleccionada == null || _libroSeleccionado == null) return;
+            
+            var mensaje = $"¿Está seguro de que desea eliminar el capítulo {_capituloSeleccionadoAdmin.Numero}? Se eliminarán todos los versículos asociados.";
+            var resultado = MessageBox.Show(mensaje, "Confirmar eliminación", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            
+            if (resultado == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    _bibliaService.EliminarCapitulo(
+                        _versionSeleccionada.Id, 
+                        _libroSeleccionado.Id, 
+                        _capituloSeleccionadoAdmin.Id);
+                    
+                    MessageBox.Show("Capítulo eliminado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                    
+                    LimpiarFormularioCapitulo();
+                    CargarCapitulos();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error al eliminar capítulo: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
     }
