@@ -155,18 +155,23 @@ namespace BibliaApp
                             Text = titulo.Texto,
                             FontWeight = FontWeights.Bold,
                             FontSize = 14,
-                            Margin = new Thickness(0, 10, 0, 5)
+                            Margin = new Thickness(0, 10, 0, 5),
+                            TextWrapping = TextWrapping.Wrap // Asegurar ajuste de texto en títulos
                         };
                         stackPanel.Children.Add(tituloTextBlock);
                     }
                     
-                    // Añadir versículo
-                    var versiculoPanel = new StackPanel
+                    // Panel para cada versículo (optimizado para ajuste de texto)
+                    var versiculoGrid = new Grid
                     {
-                        Orientation = Orientation.Horizontal,
                         Margin = new Thickness(0, 3, 0, 3)
                     };
                     
+                    // Definir columnas: una para el número y otra para el texto
+                    versiculoGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                    versiculoGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                    
+                    // Número del versículo
                     var numeroTextBlock = new TextBlock
                     {
                         Text = versiculo.Numero.ToString(),
@@ -174,17 +179,23 @@ namespace BibliaApp
                         Margin = new Thickness(0, 0, 5, 0),
                         VerticalAlignment = VerticalAlignment.Top
                     };
+                    Grid.SetColumn(numeroTextBlock, 0);
                     
+                    // Texto del versículo con ajuste de línea
                     var textoTextBlock = new TextBlock
                     {
                         Text = versiculo.Texto,
-                        TextWrapping = TextWrapping.Wrap
+                        TextWrapping = TextWrapping.Wrap,
+                        Margin = new Thickness(5, 0, 0, 0)
                     };
+                    Grid.SetColumn(textoTextBlock, 1);
                     
-                    versiculoPanel.Children.Add(numeroTextBlock);
-                    versiculoPanel.Children.Add(textoTextBlock);
+                    // Añadir elementos al grid
+                    versiculoGrid.Children.Add(numeroTextBlock);
+                    versiculoGrid.Children.Add(textoTextBlock);
                     
-                    stackPanel.Children.Add(versiculoPanel);
+                    // Añadir el grid del versículo al stackPanel principal
+                    stackPanel.Children.Add(versiculoGrid);
                     
                     ultimoVersiculoProcesado = versiculo.Numero;
                 }
@@ -197,13 +208,23 @@ namespace BibliaApp
                         Text = titulo.Texto,
                         FontWeight = FontWeights.Bold,
                         FontSize = 14,
-                        Margin = new Thickness(0, 10, 0, 5)
+                        Margin = new Thickness(0, 10, 0, 5),
+                        TextWrapping = TextWrapping.Wrap
                     };
                     stackPanel.Children.Add(tituloTextBlock);
                 }
                 
-                // Crear ScrollViewer para permitir desplazamiento
-                ScrollViewer scrollViewer = new ScrollViewer();
+                // Crear ScrollViewer con configuración óptima para lectura
+                ScrollViewer scrollViewer = new ScrollViewer
+                {
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
+                };
+                
+                // Configurar el StackPanel para que use todo el ancho disponible
+                stackPanel.HorizontalAlignment = HorizontalAlignment.Stretch;
+                
+                // Asignar el StackPanel al ScrollViewer
                 scrollViewer.Content = stackPanel;
                 
                 // Actualizar el panel de versículos
