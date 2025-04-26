@@ -111,6 +111,69 @@
                     </StackPanel>
                 </Grid>
             </TabItem>
+            
+            <!-- Pestaña de títulos bíblicos -->
+            <TabItem Header="Títulos Bíblicos">
+                <Grid Margin="5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Lista de títulos existentes -->
+                    <GroupBox Header="Títulos existentes en este capítulo" Grid.Row="0">
+                        <ListView x:Name="lstTitulos" Height="150" Margin="5"
+                                  SelectionChanged="lstTitulos_SelectionChanged">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Después del versículo" DisplayMemberBinding="{Binding PosicionPrevia}" Width="150"/>
+                                    <GridViewColumn Header="Texto del título" DisplayMemberBinding="{Binding Texto}" Width="500"/>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </GroupBox>
+                    
+                    <!-- Formulario para agregar/editar títulos -->
+                    <GroupBox Header="Agregar/Editar título" Grid.Row="1" Margin="0,10,0,0">
+                        <Grid Margin="5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <Label Grid.Row="0" Grid.Column="0" Content="Después del versículo:" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="cmbPosicionTitulo" Grid.Row="0" Grid.Column="1" Margin="5"
+                                      DisplayMemberPath="Numero" SelectedValuePath="Numero"/>
+                            
+                            <Label Grid.Row="1" Grid.Column="0" Content="Texto del título:" VerticalAlignment="Top" Margin="0,5"/>
+                            <TextBox x:Name="txtTextoTitulo" Grid.Row="1" Grid.Column="1" Margin="5" 
+                                    TextWrapping="Wrap" AcceptsReturn="True" Height="100"/>
+                            
+                            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" 
+                                       HorizontalAlignment="Right" Margin="0,10,0,0">
+                                <Button x:Name="btnLimpiarTitulo" Content="Limpiar" Width="100" Margin="0,0,10,0"
+                                       Click="btnLimpiarTitulo_Click"/>
+                                <Button x:Name="btnGuardarTitulo" Content="Guardar" Width="100" 
+                                       Click="btnGuardarTitulo_Click"/>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+                    
+                    <!-- Botones de acción para títulos -->
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                        <Button x:Name="btnEliminarTitulo" Content="Eliminar" Width="100" Margin="0,0,10,0"
+                                Click="btnEliminarTitulo_Click" IsEnabled="False"/>
+                        <Button x:Name="btnEditarTitulo" Content="Editar" Width="100"
+                                Click="btnEditarTitulo_Click" IsEnabled="False"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
         </TabControl>
     </Grid>
 </Window>

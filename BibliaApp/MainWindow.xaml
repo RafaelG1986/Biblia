@@ -67,17 +67,10 @@
                     <TextBlock x:Name="TituloTextBlock" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
                 </DockPanel>
                 
-                <!-- Lista de versículos -->
-                <ListView x:Name="VersiculosListView" Grid.Row="1">
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal" Margin="0,3">
-                                <TextBlock Text="{Binding Numero}" FontWeight="Bold" Margin="0,0,5,0" VerticalAlignment="Top"/>
-                                <TextBlock Text="{Binding Texto}" TextWrapping="Wrap"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                <!-- Panel de versículos -->
+                <Grid x:Name="VersiculosPanel" Grid.Row="1">
+                    <!-- El contenido se llenará dinámicamente -->
+                </Grid>
             </Grid>
         </Grid>
     </Grid>

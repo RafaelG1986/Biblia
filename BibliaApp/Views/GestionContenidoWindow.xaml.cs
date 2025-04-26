@@ -14,6 +14,8 @@ namespace BibliaApp.Views
         private VersionBiblia? _versionSeleccionada;
         private Libro? _libroSeleccionado;
         private Capitulo? _capituloSeleccionado;
+        private TituloBiblico? _tituloSeleccionado;
+        private bool _modoEdicionTitulo = false;
 
         public GestionContenidoWindow(BibliaService bibliaService)
         {
@@ -99,6 +101,26 @@ namespace BibliaApp.Views
             lstVersiculos.ItemsSource = versiculos.OrderBy(v => v.Numero).ToList();
         }
 
+        private void CargarTitulos()
+        {
+            if (_versionSeleccionada == null || _libroSeleccionado == null || _capituloSeleccionado == null) return;
+            
+            var titulos = _bibliaService.ObtenerTitulos(
+                _versionSeleccionada.Id, 
+                _libroSeleccionado.Id, 
+                _capituloSeleccionado.Id);
+                
+            lstTitulos.ItemsSource = titulos;
+            
+            // Cargar versículos para el selector de posición
+            var versiculos = _bibliaService.ObtenerVersiculos(
+                _versionSeleccionada.Id,
+                _libroSeleccionado.Id,
+                _capituloSeleccionado.Id);
+                
+            cmbPosicionTitulo.ItemsSource = versiculos.OrderBy(v => v.Numero).ToList();
+        }
+
         private void cmbVersiones_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             _versionSeleccionada = cmbVersiones.SelectedItem as VersionBiblia;
@@ -123,11 +145,11 @@ namespace BibliaApp.Views
             // Cargar versículos del capítulo seleccionado
             CargarVersiculos();
             
-            // Actualizar texto ejemplo en el campo de rango
-            if (_libroSeleccionado != null && _capituloSeleccionado != null)
-            {
-                txtRangoVersiculos.Text = $"{_libroSeleccionado.Nombre} {_capituloSeleccionado.Numero}:1-";
-            }
+            // Cargar títulos del capítulo seleccionado
+            CargarTitulos();
+            
+            // Limpiar los formularios
+            LimpiarFormularioTitulo();
         }
 
         private void lstVersiculos_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -135,6 +157,14 @@ namespace BibliaApp.Views
             // Habilitar/deshabilitar botones según haya selección
             btnEliminarVersiculo.IsEnabled = lstVersiculos.SelectedItem != null;
             btnEditarVersiculo.IsEnabled = lstVersiculos.SelectedItem != null;
+        }
+
+        private void lstTitulos_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            _tituloSeleccionado = lstTitulos.SelectedItem as TituloBiblico;
+            
+            btnEliminarTitulo.IsEnabled = _tituloSeleccionado != null;
+            btnEditarTitulo.IsEnabled = _tituloSeleccionado != null;
         }
 
         private void btnEliminarVersiculo_Click(object sender, RoutedEventArgs e)
@@ -207,6 +237,127 @@ namespace BibliaApp.Views
                 catch (Exception ex)
                 {
                     MessageBox.Show($"Error al actualizar versículo: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void btnGuardarTitulo_Click(object sender, RoutedEventArgs e)
+        {
+            if (_versionSeleccionada == null || _libroSeleccionado == null || _capituloSeleccionado == null)
+            {
+                MessageBox.Show("Debe seleccionar una versión, libro y capítulo.", "Datos incompletos", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            
+            if (cmbPosicionTitulo.SelectedItem == null)
+            {
+                MessageBox.Show("Debe seleccionar después de qué versículo aparecerá el título.", "Datos incompletos", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            
+            if (string.IsNullOrWhiteSpace(txtTextoTitulo.Text))
+            {
+                MessageBox.Show("Debe ingresar el texto del título.", "Datos incompletos", MessageBoxButton.OK, MessageBoxImage.Warning);
+                txtTextoTitulo.Focus();
+                return;
+            }
+            
+            try
+            {
+                var versiculo = cmbPosicionTitulo.SelectedItem as Versiculo;
+                if (versiculo == null) return;
+                
+                if (_modoEdicionTitulo && _tituloSeleccionado != null)
+                {
+                    // Actualizar título existente
+                    _tituloSeleccionado.Texto = txtTextoTitulo.Text.Trim();
+                    _tituloSeleccionado.PosicionPrevia = versiculo.Numero;
+                    
+                    _bibliaService.ActualizarTitulo(_tituloSeleccionado);
+                    MessageBox.Show("Título actualizado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    // Crear nuevo título
+                    var titulo = new TituloBiblico
+                    {
+                        Texto = txtTextoTitulo.Text.Trim(),
+                        VersionId = _versionSeleccionada.Id,
+                        LibroId = _libroSeleccionado.Id,
+                        CapituloId = _capituloSeleccionado.Id,
+                        PosicionPrevia = versiculo.Numero
+                    };
+                    
+                    _bibliaService.AgregarTitulo(titulo);
+                    MessageBox.Show("Título agregado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                
+                // Limpiar y recargar
+                LimpiarFormularioTitulo();
+                CargarTitulos();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al guardar título: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void btnLimpiarTitulo_Click(object sender, RoutedEventArgs e)
+        {
+            LimpiarFormularioTitulo();
+        }
+
+        private void LimpiarFormularioTitulo()
+        {
+            txtTextoTitulo.Text = string.Empty;
+            cmbPosicionTitulo.SelectedIndex = -1;
+            _modoEdicionTitulo = false;
+            _tituloSeleccionado = null;
+            btnGuardarTitulo.Content = "Guardar";
+        }
+
+        private void btnEliminarTitulo_Click(object sender, RoutedEventArgs e)
+        {
+            if (_tituloSeleccionado == null) return;
+            
+            var mensaje = "¿Está seguro de que desea eliminar este título?";
+            var resultado = MessageBox.Show(mensaje, "Confirmar eliminación", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            
+            if (resultado == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    _bibliaService.EliminarTitulo(_tituloSeleccionado.Id);
+                    
+                    MessageBox.Show("Título eliminado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                    
+                    LimpiarFormularioTitulo();
+                    CargarTitulos();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error al eliminar título: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void btnEditarTitulo_Click(object sender, RoutedEventArgs e)
+        {
+            if (_tituloSeleccionado == null) return;
+            
+            _modoEdicionTitulo = true;
+            btnGuardarTitulo.Content = "Actualizar";
+            
+            txtTextoTitulo.Text = _tituloSeleccionado.Texto;
+            
+            // Seleccionar el versículo correspondiente
+            var versiculos = cmbPosicionTitulo.ItemsSource as IEnumerable<Versiculo>;
+            if (versiculos != null)
+            {
+                var versiculo = versiculos.FirstOrDefault(v => v.Numero == _tituloSeleccionado.PosicionPrevia);
+                if (versiculo != null)
+                {
+                    cmbPosicionTitulo.SelectedItem = versiculo;
                 }
             }
         }

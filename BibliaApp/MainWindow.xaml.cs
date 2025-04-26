@@ -2,6 +2,8 @@
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Documents;
 using BibliaApp.Models;
 using BibliaApp.Services;
 using BibliaApp.Views;
@@ -88,7 +90,7 @@ namespace BibliaApp
             if (_versionActual == null || _libroActual == null)
             {
                 CapitulosComboBox.ItemsSource = null;
-                VersiculosListView.ItemsSource = null;
+                VersiculosPanel.Children.Clear();
                 TituloTextBlock.Text = string.Empty;
                 return;
             }
@@ -126,14 +128,92 @@ namespace BibliaApp
                 var versiculos = _bibliaService.ObtenerVersiculos(
                     _versionActual?.Id ?? string.Empty, 
                     _libroActual.Id, 
+                    capitulo.Id)
+                    .OrderBy(v => v.Numero)
+                    .ToList();
+                    
+                // Obtener títulos para este capítulo
+                var titulos = _bibliaService.ObtenerTitulos(
+                    _versionActual?.Id ?? string.Empty,
+                    _libroActual.Id,
                     capitulo.Id);
+                    
+                // Crear lista para visualización
+                var stackPanel = new StackPanel();
                 
-                VersiculosListView.ItemsSource = versiculos.OrderBy(v => v.Numero).ToList();
+                // Procesar versículos e insertar títulos en su posición
+                int ultimoVersiculoProcesado = 0;
+                
+                foreach (var versiculo in versiculos)
+                {
+                    // Añadir títulos que van antes de este versículo
+                    foreach (var titulo in titulos.Where(t => t.PosicionPrevia == ultimoVersiculoProcesado))
+                    {
+                        // Agregar título
+                        var tituloTextBlock = new TextBlock
+                        {
+                            Text = titulo.Texto,
+                            FontWeight = FontWeights.Bold,
+                            FontSize = 14,
+                            Margin = new Thickness(0, 10, 0, 5)
+                        };
+                        stackPanel.Children.Add(tituloTextBlock);
+                    }
+                    
+                    // Añadir versículo
+                    var versiculoPanel = new StackPanel
+                    {
+                        Orientation = Orientation.Horizontal,
+                        Margin = new Thickness(0, 3, 0, 3)
+                    };
+                    
+                    var numeroTextBlock = new TextBlock
+                    {
+                        Text = versiculo.Numero.ToString(),
+                        FontWeight = FontWeights.Bold,
+                        Margin = new Thickness(0, 0, 5, 0),
+                        VerticalAlignment = VerticalAlignment.Top
+                    };
+                    
+                    var textoTextBlock = new TextBlock
+                    {
+                        Text = versiculo.Texto,
+                        TextWrapping = TextWrapping.Wrap
+                    };
+                    
+                    versiculoPanel.Children.Add(numeroTextBlock);
+                    versiculoPanel.Children.Add(textoTextBlock);
+                    
+                    stackPanel.Children.Add(versiculoPanel);
+                    
+                    ultimoVersiculoProcesado = versiculo.Numero;
+                }
+                
+                // Añadir títulos al final si los hay
+                foreach (var titulo in titulos.Where(t => t.PosicionPrevia == ultimoVersiculoProcesado))
+                {
+                    var tituloTextBlock = new TextBlock
+                    {
+                        Text = titulo.Texto,
+                        FontWeight = FontWeights.Bold,
+                        FontSize = 14,
+                        Margin = new Thickness(0, 10, 0, 5)
+                    };
+                    stackPanel.Children.Add(tituloTextBlock);
+                }
+                
+                // Crear ScrollViewer para permitir desplazamiento
+                ScrollViewer scrollViewer = new ScrollViewer();
+                scrollViewer.Content = stackPanel;
+                
+                // Actualizar el panel de versículos
+                VersiculosPanel.Children.Clear();
+                VersiculosPanel.Children.Add(scrollViewer);
             }
             else
             {
                 TituloTextBlock.Text = string.Empty;
-                VersiculosListView.ItemsSource = null;
+                VersiculosPanel.Children.Clear();
             }
         }
         

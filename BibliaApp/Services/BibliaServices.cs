@@ -337,7 +337,7 @@ namespace BibliaApp.Services
                 .OrderBy(t => t.PosicionPrevia)
                 .ToList();
         }
-        
+
         public void AgregarTitulo(TituloBiblico titulo)
         {
             // Asignar ID
@@ -346,7 +346,7 @@ namespace BibliaApp.Services
             _titulos.Add(titulo);
             GuardarTitulos();
         }
-        
+
         public void ActualizarTitulo(TituloBiblico titulo)
         {
             var tituloExistente = _titulos.FirstOrDefault(t => t.Id == titulo.Id);
@@ -358,7 +358,7 @@ namespace BibliaApp.Services
             
             GuardarTitulos();
         }
-        
+
         public void EliminarTitulo(int tituloId)
         {
             var titulo = _titulos.FirstOrDefault(t => t.Id == tituloId);
